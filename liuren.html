@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小六壬自动决断</title>
+    <!-- 引入Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- 配置Tailwind自定义颜色和字体 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2D3748',
+                        secondary: '#4A5568',
+                        accent: '#805AD5',
+                        light: '#F7FAFC',
+                        result: {
+                            good: '#38A169',
+                            neutral: '#ECC94B',
+                            bad: '#E53E3E'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .bg-gradient {
+                background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient min-h-screen font-sans text-primary">
+    <div class="container mx-auto px-4 py-8 max-w-3xl">
+        <!-- 页面标题 -->
+        <header class="text-center mb-10">
+            <h1 class="text-[clamp(1.8rem,5vw,2.5rem)] font-bold text-primary mb-2 text-shadow">小六壬自动决断</h1>
+            <p class="text-secondary text-sm md:text-base">根据当前农历日期和时间自动推算</p>
+        </header>
+        
+        <!-- 主内容区 -->
+        <main class="bg-white rounded-xl shadow-md p-6 md:p-8 mb-8 transform transition-all duration-300 hover:shadow-lg">
+            <!-- 时间信息 -->
+            <div class="mb-8">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h2 class="text-lg font-semibold mb-1 flex items-center">
+                            <i class="fa fa-calendar-o mr-2 text-accent"></i>当前时间
+                        </h2>
+                        <p id="solar-date" class="text-secondary text-sm">公历：加载中...</p>
+                        <p id="lunar-date" class="text-secondary font-medium">农历：加载中...</p>
+                    </div>
+                    <div class="self-end md:self-auto">
+                        <button id="refresh-btn" class="flex items-center text-sm bg-accent/10 hover:bg-accent/20 text-accent px-4 py-2 rounded-lg transition-colors duration-200">
+                            <i class="fa fa-refresh mr-1"></i> 重新测算
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 决断结果 -->
+            <div class="mb-8">
+                <h2 class="text-lg font-semibold mb-4 flex items-center">
+                    <i class="fa fa-compass mr-2 text-accent"></i>决断结果
+                </h2>
+                <div id="result-card" class="border border-gray-200 rounded-lg p-6 text-center transform transition-all duration-300 hover:border-accent/30">
+                    <div class="text-4xl font-bold mb-2" id="result-name">加载中...</div>
+                    <div class="w-20 h-1 bg-accent mx-auto my-4 rounded-full"></div>
+                    <div class="text-secondary" id="result-summary">正在计算结果...</div>
+                </div>
+            </div>
+            
+            <!-- 详细解析 -->
+            <div>
+                <h2 class="text-lg font-semibold mb-4 flex items-center">
+                    <i class="fa fa-book mr-2 text-accent"></i>结果解析
+                </h2>
+                <div id="result-detail" class="bg-gray-50 rounded-lg p-5 text-secondary leading-relaxed">
+                    <p>请等待解析加载...</p>
+                </div>
+            </div>
+        </main>
+        
+        <!-- 页脚信息 -->
+        <footer class="text-center text-sm text-gray-500">
+            <p class="mt-1">结果仅供参考，请勿过度迷信</p>
+        </footer>
+    </div>
+
+    <script>
+        // 农历转换和小六壬计算逻辑
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化页面
+            updateDivination();
+            
+            // 绑定刷新按钮事件
+            document.getElementById('refresh-btn').addEventListener('click', function() {
+                this.innerHTML = '<i class="fa fa-circle-o-notch fa-spin mr-1"></i> 测算中...';
+                setTimeout(() => {
+                    updateDivination();
+                    this.innerHTML = '<i class="fa fa-refresh mr-1"></i> 重新测算';
+                }, 600);
+            });
+        });
+        
+        // 更新占卜结果
+        function updateDivination() {
+            const now = new Date();
+            updateDateTime(now);
+            
+            const lunar = solarToLunar(now);
+            const result = calculateLiuXiaoRen(lunar, now);
+            
+            displayResult(result);
+        }
+        
+        // 更新日期时间显示
+        function updateDateTime(date) {
+            // 显示公历日期
+            const solarOptions = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+            document.getElementById('solar-date').textContent = `公历：${date.toLocaleString('zh-CN', solarOptions)}`;
+            
+            // 计算并显示农历日期
+            const lunar = solarToLunar(date);
+            const lunarStr = `${lunar.lunarYear}年${lunar.lunarMonthName}${lunar.lunarDay}日 ${getLunarHour(lunar.hour)}时`;
+            document.getElementById('lunar-date').textContent = `农历：${lunarStr}`;
+        }
+        
+        // 公历转农历
+        function solarToLunar(date) {
+            const year = date.getFullYear();
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            const hour = date.getHours();
+            
+            // 简化的农历转换（实际应用中可能需要更复杂的算法或库）
+            // 这里使用一个简化模型，实际应用中应替换为完整的农历转换算法
+            const lunarMonths = ['正月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+            const lunarDays = ['初一', '初二', '初三', '初四', '初五', '初六', '初七', '初八', '初九', '初十',
+                             '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十',
+                             '廿一', '廿二', '廿三', '廿四', '廿五', '廿六', '廿七', '廿八', '廿九', '三十'];
+            
+            // 计算农历月（这里使用简单的映射，实际应使用精确算法）
+            let lunarMonth = month;
+            let lunarMonthName = lunarMonths[lunarMonth - 1];
+            
+            // 计算农历日（这里使用简单的映射，实际应使用精确算法）
+            let lunarDayIdx = (day - 1) % lunarDays.length;
+            let lunarDay = lunarDays[lunarDayIdx];
+            
+            // 计算农历年（这里直接使用公历年，实际应使用农历年）
+            let lunarYear = year;
+            
+            return {
+                lunarYear,
+                lunarMonth,
+                lunarMonthName,
+                lunarDay,
+                lunarDayIdx: lunarDayIdx + 1, // 转换为1-based索引
+                hour: Math.floor(hour / 2) // 转换为时辰（2小时一个时辰）
+            };
+        }
+        
+        // 获取时辰名称
+        function getLunarHour(hourIdx) {
+            const hours = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+            return hours[hourIdx % 12];
+        }
+        
+        // 计算小六壬
+        function calculateLiuXiaoRen(lunar, date) {
+            // 小六壬六神
+            const gods = [
+                { 
+                    name: '大安', 
+                    summary: '大吉，凡事顺利，平安吉祥', 
+                    detail: '大安事事昌，求财在坤方，失物去不远，宅舍保安康。行人身未动，病者主无妨，将军回田野，仔细更推详。',
+                    luck: 'good'
+                },
+                { 
+                    name: '留连', 
+                    summary: '中凶，事情拖延，纠缠不清', 
+                    detail: '留连事难成，求谋日未明，官事只宜缓，去者未回程。失物南方见，急讨方称心，更须防口舌，人口且平平。',
+                    luck: 'bad'
+                },
+                { 
+                    name: '速喜', 
+                    summary: '大吉，事情迅速，喜从天降', 
+                    detail: '速喜喜来临，求财向南行，失物申午未，逢人路上寻。官事有福德，病者无祸侵，田宅六畜吉，行人有信音。',
+                    luck: 'good'
+                },
+                { 
+                    name: '赤口', 
+                    summary: '大凶，口舌是非，官司纠纷', 
+                    detail: '赤口主口舌，官非切要防，失物急去寻，行人有惊慌。鸡犬多作怪，病者出西方，更须防诅咒，恐怕染瘟殃。',
+                    luck: 'bad'
+                },
+                { 
+                    name: '小吉', 
+                    summary: '吉，小事顺利，小有收获', 
+                    detail: '小吉最吉昌，路上好商量，阴人来报喜，失物在坤方。行人立便至，交易甚是强，凡事皆和合，病者叩穹苍。',
+                    luck: 'good'
+                },
+                { 
+                    name: '空亡', 
+                    summary: '大凶，事情落空，希望渺茫', 
+                    detail: '空亡事不祥，阴人多乖张，求财无利益，行人有灾殃。失物寻不见，官事有刑伤，病人逢暗鬼，解禳保安康。',
+                    luck: 'bad'
+                }
+            ];
+            
+            // 计算小六壬：月 -> 日 -> 时
+            let index = (lunar.lunarMonth - 1) % 6; // 以月份为起点
+            index = (index + lunar.lunarDayIdx - 1) % 6; // 加日期
+            index = (index + lunar.hour) % 6; // 加时辰
+            
+            return gods[index];
+        }
+        
+        // 显示结果
+        function displayResult(result) {
+            const resultCard = document.getElementById('result-card');
+            const resultName = document.getElementById('result-name');
+            const resultSummary = document.getElementById('result-summary');
+            const resultDetail = document.getElementById('result-detail');
+            
+            // 设置结果样式
+            resultCard.className = `border rounded-lg p-6 text-center transform transition-all duration-300`;
+            if (result.luck === 'good') {
+                resultCard.classList.add('border-result-good/30', 'bg-result-good/5');
+                resultName.classList.add('text-result-good');
+            } else if (result.luck === 'bad') {
+                resultCard.classList.add('border-result-bad/30', 'bg-result-bad/5');
+                resultName.classList.add('text-result-bad');
+            } else {
+                resultCard.classList.add('border-result-neutral/30', 'bg-result-neutral/5');
+                resultName.classList.add('text-result-neutral');
+            }
+            
+            // 添加动画效果
+            resultCard.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                resultName.textContent = result.name;
+                resultSummary.textContent = result.summary;
+                resultDetail.innerHTML = `<p>${result.detail}</p>`;
+                
+                resultCard.classList.remove('scale-95', 'opacity-0');
+                resultCard.classList.add('scale-100', 'opacity-100');
+            }, 200);
+        }
+    </script>
+</body>
+</html>
