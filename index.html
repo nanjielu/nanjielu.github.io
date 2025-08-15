@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简约导航</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#f3f4f6',
+                        dark: '#1f2937'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .card-hover {
+                @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+            }
+            .search-focus {
+                @apply focus:ring-2 focus:ring-primary/50 focus:outline-none;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 顶部区域 -->
+    <header class="py-8 px-4 sm:px-6 lg:px-8 bg-white shadow-sm">
+        <div class="max-w-6xl mx-auto">
+            <h1 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold text-dark text-center mb-6">
+                <i class="fa fa-compass text-primary mr-2"></i>简约导航
+            </h1>
+            
+            <!-- 搜索框 -->
+            <div class="relative max-w-2xl mx-auto">
+                <input 
+                    type="text" 
+                    placeholder="搜索网站或内容..." 
+                    class="w-full py-3 px-5 pr-12 rounded-full border border-gray-200 shadow-sm search-focus"
+                >
+                <button class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-primary transition-colors">
+                    <i class="fa fa-search text-lg"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要内容区 -->
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- 常用导航 -->
+        <section class="mb-12">
+            <h2 class="text-xl font-semibold text-dark mb-4 flex items-center">
+                <i class="fa fa-star text-yellow-400 mr-2"></i>常用网站
+            </h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <!-- 导航卡片 -->
+                <a href="https://www.baidu.com" target="_blank" class="bg-white rounded-lg p-4 text-center shadow-sm card-hover">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <i class="fa fa-search text-primary text-xl"></i>
+                    </div>
+                    <span class="text-sm font-medium">百度</span>
+                </a>
+                
+                <a href="https://www.bilibili.com" target="_blank" class="bg-white rounded-lg p-4 text-center shadow-sm card-hover">
+                    <div class="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <i class="fa fa-play-circle text-pink-500 text-xl"></i>
+                    </div>
+                    <span class="text-sm font-medium">哔哩哔哩</span>
+                </a>
+                
+                <a href="https://www.github.com" target="_blank" class="bg-white rounded-lg p-4 text-center shadow-sm card-hover">
+                    <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <i class="fa fa-github text-gray-800 text-xl"></i>
+                    </div>
+                    <span class="text-sm font-medium">GitHub</span>
+                </a>
+                
+                <a href="https://www.taobao.com" target="_blank" class="bg-white rounded-lg p-4 text-center shadow-sm card-hover">
+                    <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <i class="fa fa-shopping-bag text-orange-500 text-xl"></i>
+                    </div>
+                    <span class="text-sm font-medium">淘宝</span>
+                </a>
+                
+                <a href="https://mail.qq.com" target="_blank" class="bg-white rounded-lg p-4 text-center shadow-sm card-hover">
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <i class="fa fa-envelope text-green-500 text-xl"></i>
+                    </div>
+                    <span class="text-sm font-medium">QQ邮箱</span>
+                </a>
+                
+                <a href="https://cn.bing.com" target="_blank" class="bg-white rounded-lg p-4 text-center shadow-sm card-hover">
+                    <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <i class="fa fa-globe text-purple-500 text-xl"></i>
+                    </div>
+                    <span class="text-sm font-medium">必应</span>
+                </a>
+            </div>
+        </section>
+
+        <!-- 学习导航 -->
+        <section class="mb-12">
+            <h2 class="text-xl font-semibold text-dark mb-4 flex items-center">
+                <i class="fa fa-book text-green-500 mr-2"></i>学习资源
+            </h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <a href="https://leetcode.cn" target="_blank" class="bg-white rounded-lg p-4 text-center shadow-sm card-hover">
+                    <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <i class="fa fa-code text-red-500 text-xl"></i>
+                    </div>
+                    <span class="text-sm font-medium">力扣</span>
+                </a>
+                
+                <a href="https://www.csdn.net" target="_blank" class="bg-white rounded-lg p-4 text-center shadow-sm card-hover">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <i class="fa fa-laptop text-blue-500 text-xl"></i>
+                    </div>
+                    <span class="text-sm font-medium">CSDN</span>
+                </a>
+                
+                <a href="https://www.icourse163.org" target="_blank" class="bg-white rounded-lg p-4 text-center shadow-sm card-hover">
+                    <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <i class="fa fa-graduation-cap text-orange-500 text-xl"></i>
+                    </div>
+                    <span class="text-sm font-medium">中国大学MOOC</span>
+                </a>
+            </div>
+        </section>
+
+        <!-- 工具导航 -->
+        <section>
+            <h2 class="text-xl font-semibold text-dark mb-4 flex items-center">
+                <i class="fa fa-wrench text-blue-500 mr-2"></i>实用工具
+            </h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <a href="https://tool.lu" target="_blank" class="bg-white rounded-lg p-4 text-center shadow-sm card-hover">
+                    <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <i class="fa fa-cogs text-gray-600 text-xl"></i>
+                    </div>
+                    <span class="text-sm font-medium">在线工具</span>
+                </a>
+                
+                <a href="https://convertio.co/zh/" target="_blank" class="bg-white rounded-lg p-4 text-center shadow-sm card-hover">
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <i class="fa fa-exchange text-green-500 text-xl"></i>
+                    </div>
+                    <span class="text-sm font-medium">格式转换</span>
+                </a>
+                
+                <a href="https://www.figma.com" target="_blank" class="bg-white rounded-lg p-4 text-center shadow-sm card-hover">
+                    <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <i class="fa fa-paint-brush text-purple-500 text-xl"></i>
+                    </div>
+                    <span class="text-sm font-medium">Figma</span>
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-white py-6 border-t border-gray-200 mt-12">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-sm">
+            <p>© 2023 简约导航 | 设计与开发 <i class="fa fa-heart text-red-500"></i></p>
+        </div>
+    </footer>
+
+    <script>
+        // 简单的搜索功能实现
+        document.querySelector('input[placeholder="搜索网站或内容..."]').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const searchText = this.value.trim();
+                if (searchText) {
+                    // 默认使用百度搜索
+                    window.open(`https://www.baidu.com/s?wd=${encodeURIComponent(searchText)}`);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
