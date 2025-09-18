@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>南街路49号 - 常用网站导航</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        accent: '#8B5CF6',
+                        dark: '#1F2937',
+                        light: '#F3F4F6'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .card-hover {
+                @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+            }
+            .section-title {
+                @apply text-2xl font-bold mb-6 text-dark border-b-2 border-black pb-2;
+            }
+            .link-card {
+                @apply bg-white rounded-lg shadow p-4 flex items-center gap-3 card-hover;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <header class="bg-gradient-to-r from-primary to-accent text-white py-12 px-4 md:px-8">
+        <div class="container mx-auto">
+            <h1 class="text-4xl md:text-5xl font-bold mb-2">南街路49号 - 常用网站导航</h1>
+            <p class="text-lg md:text-xl opacity-90">Github @nanjielu</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 md:py-12">
+        <!-- 科研文献检索部分 -->
+        <section class="mb-12">
+            <h2 class="section-title">
+                <i class="fa fa-search text-primary mr-2"></i>科研文献检索
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <a href="https://www.x-mol.com/" class="link-card" target="_blank">
+                    <i class="fa fa-search-plus text-primary text-xl"></i>
+                    <div>
+                        <h3 class="font-semibold">X-MOL学术平台</h3>
+                        <p class="text-sm text-gray-500">检索、订阅、跟进最新研究进展</p>
+                    </div>
+                </a>
+                <a href="https://webofscience.clarivate.cn/wos/woscc/basic-search" class="link-card" target="_blank">
+                    <i class="fa fa-globe text-primary text-xl"></i>
+                    <div>
+                        <h3 class="font-semibold">Web of Science</h3>
+                        <p class="text-sm text-gray-500">国际权威的学术文献数据库</p>
+                    </div>
+                </a>
+                <a href="http://www.sci-hub.se/" class="link-card" target="_blank">
+                    <i class="fa fa-unlock-alt text-primary text-xl"></i>
+                    <div>
+                        <h3 class="font-semibold">Sci-Hub</h3>
+                        <p class="text-sm text-gray-500">学术文献开放获取平台</p>
+                    </div>
+                </a>
+                <a href="https://chn.oversea.cnki.net/index/" class="link-card" target="_blank">
+                    <i class="fa fa-book text-primary text-xl"></i>
+                    <div>
+                        <h3 class="font-semibold">中国知网</h3>
+                        <p class="text-sm text-gray-500">中文期刊论文数据库</p>
+                    </div>
+                </a>
+                <a href="https://cprs.patentstar.com.cn/" class="link-card" target="_blank">
+                    <i class="fa fa-file-text text-primary text-xl"></i>
+                    <div>
+                        <h3 class="font-semibold">专利之星</h3>
+                        <p class="text-sm text-gray-500">中文专利检索平台</p>
+                    </div>
+                </a>
+                <a href="https://www.connectedpapers.com/" class="link-card" target="_blank">
+                    <i class="fa fa-sitemap text-primary text-xl"></i>
+                    <div>
+                        <h3 class="font-semibold">Connected Papers</h3>
+                        <p class="text-sm text-gray-500">文献关联分析工具</p>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- 生物学专业数据库部分 -->
+        <section class="mb-12">
+            <h2 class="section-title">
+                <i class="fa fa-database text-secondary mr-2"></i>生物医学数据库
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <a href="https://www.ncbi.nlm.nih.gov/" class="link-card" target="_blank">
+                    <i class="fa fa-sitemap text-secondary text-xl"></i>
+                    <div>
+                        <h3 class="font-semibold">NCBI</h3>
+                        <p class="text-sm text-gray-500">综合生物信息数据库</p>
+                    </div>
+                </a>
+                <a href="https://metacyc.org/" class="link-card" target="_blank">
+                    <i class="fa fa-sitemap text-secondary text-xl"></i>
+                    <div>
+                        <h3 class="font-semibold">MetaCyc</h3>
+                        <p class="text-sm text-gray-500">基因及代谢数据库</p>
+                    </div>
+                </a>
+                <a href="https://www.ecocyc.org/" class="link-card" target="_blank">
+                    <i class="fa fa-sitemap text-secondary text-xl"></i>
+                    <div>
+                        <h3 class="font-semibold">EcoCyc</h3>
+                        <p class="text-sm text-gray-500">大肠杆菌基因及代谢数据库</p>
+                    </div>
+                </a>
+                <a href="https://www.uniprot.org/" class="link-card" target="_blank">
+                    <i class="fa fa-product-hunt text-secondary text-xl"></i>
+                    <div>
+                        <h3 class="font-semibold">UniProt</h3>
+                        <p class="text-sm text-gray-500">蛋白质数据库</p>
+                    </div>
+                </a>
+                <a href="https://string-db.org/" class="link-card" target="_blank">
+                    <i class="fa fa-link text-secondary text-xl"></i>
+                    <div>
+                        <h3 class="font-semibold">STRING</h3>
+                        <p class="text-sm text-gray-500">蛋白质互作(PPi)数据库</p>
+                    </div>
+                </a>
+                <a href="http://www.rcsb.org/" class="link-card" target="_blank">
+                    <i class="fa fa-cube text-secondary text-xl"></i>
+                    <div>
+                        <h3 class="font-semibold">RCSB PDB</h3>
+                        <p class="text-sm text-gray-500">蛋白质结构数据库</p>
+                    </div>
+                </a>
+                <a href="https://alphafold.ebi.ac.uk/" class="link-card" target="_blank">
+                    <i class="fa fa-cubes text-secondary text-xl"></i>
+                    <div>
+                        <h3 class="font-semibold">AlphaFold DB</h3>
+                        <p class="text-sm text-gray-500">蛋白质结构预测数据库</p>
+                    </div>
+                </a>
+                <a href="https://www.brenda-enzymes.org/" class="link-card" target="_blank">
+                    <i class="fa fa-flask text-secondary text-xl"></i>
+                    <div>
+                        <h3 class="font-semibold">BRENDA</h3>
+                        <p class="text-sm text-gray-500">酶学数据库</p>
+                    </div>
+                </a>
+                <a href="http://bio-comp.org.cn/llpsdb/home.html" class="link-card" target="_blank">
+                    <i class="fa fa-tint text-secondary text-xl"></i>
+                    <div>
+                        <h3 class="font-semibold">LLPSDB</h3>
+                        <p class="text-sm text-gray-500">蛋白质液液相分离(LLPS)数据库</p>
+                    </div>
+                </a>
+                <a href="https://www.fpbase.org/" class="link-card" target="_blank">
+                    <i class="fa fa-lightbulb-o text-secondary text-xl"></i>
+                    <div>
+                        <h3 class="font-semibold">FPbase</h3>
+                        <p class="text-sm text-gray-500">荧光蛋白数据库</p>
+                    </div>
+                </a>
+                <a href="https://www.genome.jp/kegg/" class="link-card" target="_blank">
+                    <i class="fa fa-sitemap text-secondary text-xl"></i>
+                    <div>
+                        <h3 class="font-semibold">KEGG</h3>
+                        <p class="text-sm text-gray-500">生物系统模型数据库</p>
+                    </div>
+                </a>
+                <a href="https://www.guidetopharmacology.org/" class="link-card" target="_blank">
+                    <i class="fa fa-medkit text-secondary text-xl"></i>
+                    <div>
+                        <h3 class="font-semibold">IUPHAR/BPS</h3>
+                        <p class="text-sm text-gray-500">疾病药理学数据库</p>
+                    </div>
+                </a>
+                <a href="https://www.ebi.ac.uk/chembl/" class="link-card" target="_blank">
+                    <i class="fa fa-medkit text-secondary text-xl"></i>
+                    <div>
+                        <h3 class="font-semibold">ChEMBL</h3>
+                        <p class="text-sm text-gray-500">药物靶点数据库</p>
+                    </div>
+                </a>
+                <a href="https://db.idrblab.net/ttd/" class="link-card" target="_blank">
+                    <i class="fa fa-medkit text-secondary text-xl"></i>
+                    <div>
+                        <h3 class="font-semibold">TTD</h3>
+                        <p class="text-sm text-gray-500">治疗靶点数据库</p>
+                    </div>
+                </a>
+                <a href="http://origin-gene.cn/database/CMTTdb/index.html" class="link-card" target="_blank">
+                    <i class="fa fa-medkit text-secondary text-xl"></i>
+                    <div>
+                        <h3 class="font-semibold">CMTTdb</h3>
+                        <p class="text-sm text-gray-500">癌症分子靶向治疗综合数据库</p>
+                    </div>
+                </a>
+                <a href="https://pubchem.ncbi.nlm.nih.gov/" class="link-card" target="_blank">
+                    <i class="fa fa-flask text-secondary text-xl"></i>
+                    <div>
+                        <h3 class="font-semibold">PubChem</h3>
+                        <p class="text-sm text-gray-500">综合化学数据库</p>
+                    </div>
+                </a>
+                <a href="https://www.bindingdb.org/rwd/bind/index.jsp" class="link-card" target="_blank">
+                    <i class="fa fa-link text-secondary text-xl"></i>
+                    <div>
+                        <h3 class="font-semibold">BindingDB</h3>
+                        <p class="text-sm text-gray-500">小分子结合数据库</p>
+                    </div>
+                </a>
+                <a href="https://wekwikgene.wllsb.edu.cn/" class="link-card" target="_blank">
+                    <i class="fa fa-circle-o-notch text-secondary text-xl"></i>
+                    <div>
+                        <h3 class="font-semibold">WeKwikGene</h3>
+                        <p class="text-sm text-gray-500">西湖大学质粒共享平台</p>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- 工具部分 -->
+        <section class="mb-12">
+            <h2 class="section-title">
+                <i class="fa fa-wrench text-accent mr-2"></i>生物学研究在线工具
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <a href="https://blast.ncbi.nlm.nih.gov/" class="link-card" target="_blank">
+                    <i class="fa fa-exchange text-accent text-xl"></i>
+                    <div>
+                        <h3 class="font-semibold">BLAST</h3>
+                        <p class="text-sm text-gray-500">核酸/蛋白质序列比对</p>
+                    </div>
+                </a>
+                <a href="https://alphafoldserver.com/" class="link-card" target="_blank">
+                    <i class="fa fa-cubes text-accent text-xl"></i>
+                    <div>
+                        <h3 class="font-semibold">AlphaFold Server</h3>
+                        <p class="text-sm text-gray-500">蛋白质折叠预测</p>
+                    </div>
+                </a>
+                <a href="https://cluspro.org/" class="link-card" target="_blank">
+                    <i class="fa fa-link text-accent text-xl"></i>
+                    <div>
+                        <h3 class="font-semibold">ClusPro</h3>
+                        <p class="text-sm text-gray-500">蛋白质-蛋白质对接</p>
+                    </div>
+                </a>
+                <a href="https://www.ebi.ac.uk/msd-srv/prot_int/pistart.html" class="link-card" target="_blank">
+                    <i class="fa fa-link text-accent text-xl"></i>
+                    <div>
+                        <h3 class="font-semibold">PDBe PISA</h3>
+                        <p class="text-sm text-gray-500">蛋白质界面相互作用分析</p>
+                    </div>
+                </a>
+                <a href="https://chopchop.cbu.uib.no/" class="link-card" target="_blank">
+                    <i class="fa fa-scissors text-accent text-xl"></i>
+                    <div>
+                        <h3 class="font-semibold">CHOPCHOP</h3>
+                        <p class="text-sm text-gray-500">CRISPR/Cas9切割位点设计</p>
+                    </div>
+                </a>
+                <a href="https://web.expasy.org/protparam/" class="link-card" target="_blank">
+                    <i class="fa fa-product-hunt text-accent text-xl"></i>
+                    <div>
+                        <h3 class="font-semibold">ProtParam</h3>
+                        <p class="text-sm text-gray-500">蛋白质理化数据计算</p>
+                    </div>
+                </a>
+                <a href="https://www.novopro.cn/tools/" class="link-card" target="_blank">
+                    <i class="fa fa-wrench text-accent text-xl"></i>
+                    <div>
+                        <h3 class="font-semibold">Buffer </h3>
+                        <p class="text-sm text-gray-500">多种在线工具集</p>
+                    </div>
+                </a>
+                <a href="https://www.novopro.cn/tools/" class="link-card" target="_blank">
+                    <i class="fa fa-percent text-accent text-xl"></i>
+                    <div>
+                        <h3 class="font-semibold">Buffer Calculation</h3>
+                        <p class="text-sm text-gray-500">缓冲溶液配制计算</p>
+                    </div>
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-dark text-white py-8 px-4">
+        <div class="container mx-auto text-center">
+            <p>南街路49号 - 常用网站导航 &copy; 2025 @nanjielu</p>
+            <p class="text-sm opacity-70 mt-2">本页面由AI辅助制作，拥抱AI，拥抱未来！</p>
+        </div>
+    </footer>
+
+    <script>
+        // 添加页面加载动画
+        document.addEventListener('DOMContentLoaded', () => {
+            const cards = document.querySelectorAll('.link-card');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 100 * index);
+            });
+        });
+    </script>
+</body>
+</html>
