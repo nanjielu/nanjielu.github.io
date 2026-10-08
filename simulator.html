@@ -29,6 +29,7 @@
   .stat-row { display: flex; justify-content: space-between; padding: 2px 0; font-variant-numeric: tabular-nums; }
   .stat-row span:first-child { color: #666; }
   #histCanvas { width: 100%; height: 140px; background: #fff; border: 1px solid #eee; }
+  #gelCanvas { width: 100%; height: 140px; background: #fff; border: 1px solid #eee; }
   #pieCanvas { width: 100%; height: 120px; background: #fff; border: 1px solid #eee; }
   #warn { color: #c0392b; min-height: 16px; font-size: 11px; }
   .hint { color: #999; font-size: 11px; }
@@ -85,6 +86,9 @@
     <h3>分子量分布（MW = 颗粒数×44 + 骨架数×骨架分子量，单位 kDa）</h3>
     <canvas id="histCanvas"></canvas>
     <div class="hint" id="histLabel"></div>
+    <h3>蛋白胶条带模拟（强度 = 分子量 × 分子数）</h3>
+    <canvas id="gelCanvas"></canvas>
+    <div class="hint" id="gelLabel"></div>
     <h3>结合占比</h3>
     <canvas id="pieCanvas"></canvas>
     <div class="hint" id="pieLabel"></div>
@@ -358,11 +362,12 @@ const Sim = {
  * 渲染模块 Render（与模拟逻辑分离）
  * ============================================================ */
 const Render = {
-  ctx: null, histCtx: null, dispSize: 0,
+  ctx: null, histCtx: null, gelCtx: null, dispSize: 0,
 
   init() {
     this.ctx = document.getElementById('canvas').getContext('2d');
     this.histCtx = document.getElementById('histCanvas').getContext('2d');
+    this.gelCtx = document.getElementById('gelCanvas').getContext('2d');
     this.pieCtx = document.getElementById('pieCanvas').getContext('2d');
     this.resize();
     window.addEventListener('resize', () => this.resize());
@@ -470,6 +475,39 @@ const Render = {
     for (let i = 0; i < nBins; i++) ctx.fillText(minMW + i * binSize, i * barW + barW / 2, h - 3);
     const realMax = entries[entries.length - 1].mw;
     document.getElementById('histLabel').textContent = ``;
+  },
+
+  // 蛋白胶条带模拟：横轴=分子量，纵轴=条带强度=分子量×分子数（模拟按总质量染色）
+  gel(st) {
+    const ctx = this.gelCtx, dpr = window.devicePixelRatio || 1;
+    const w = document.getElementById('gelCanvas').clientWidth;
+    const h = 140;
+    const c = document.getElementById('gelCanvas');
+    c.width = w * dpr; c.height = h * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
+    const entries = Object.entries(st.mwHist).map(([mw, c]) => ({ mw: +mw, c }));
+    if (entries.length === 0) { document.getElementById('gelLabel').textContent = '暂无数据'; return; }
+    // 与分子量分布图一致：0–640 kDa，间隔 80，共 8 个箱
+    const minMW = 0, binSize = 80, nBins = 8;
+    const bins = new Array(nBins).fill(0); // 每箱 = Σ(分子量 × 分子数)，即该区间总质量
+    for (const e of entries) {
+      let bi = Math.floor((e.mw - minMW) / binSize);
+      if (bi < 0) bi = 0;
+      if (bi >= nBins) bi = nBins - 1;
+      bins[bi] += e.mw * e.c;
+    }
+    const maxMass = Math.max(...bins) || 1;
+    const barW = w / nBins, pad = 2, baseY = h - 16;
+    // 蛋白胶染色条带：深蓝色柱
+    ctx.fillStyle = '#1a3d6b';
+    for (let i = 0; i < nBins; i++) {
+      const bh = (bins[i] / maxMass) * (baseY - 14);
+      const x = i * barW;
+      if (bins[i] > 0) ctx.fillRect(x + pad, baseY - bh, barW - 2 * pad, bh);
+    }
+    ctx.fillStyle = '#666'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
+    for (let i = 0; i < nBins; i++) ctx.fillText(minMW + i * binSize, i * barW + barW / 2, h - 3);
+    document.getElementById('gelLabel').textContent = '';
   },
 
   pie(st) {
@@ -582,7 +620,7 @@ bindButtons();
 Render.init();
 state = Sim.build();
 loop();
-setInterval(() => { if (state) { const st = Sim.stats(); updateStatsUI(st); Render.hist(st); Render.pie(st); } }, 500);
+setInterval(() => { if (state) { const st = Sim.stats(); updateStatsUI(st); Render.hist(st); Render.gel(st); Render.pie(st); } }, 500);
 </script>
 </body>
 </html>
