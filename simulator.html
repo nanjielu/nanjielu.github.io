@@ -29,7 +29,7 @@
   .stat-row { display: flex; justify-content: space-between; padding: 2px 0; font-variant-numeric: tabular-nums; }
   .stat-row span:first-child { color: #666; }
   #histCanvas { width: 100%; height: 140px; background: #fff; border: 1px solid #eee; }
-  #gelCanvas { width: 100%; height: 180px; background: #fff; border: 1px solid #eee; }
+  #gelCanvas { width: 100%; height: 36px; background: #fff; border: 1px solid #eee; }
   #pieCanvas { width: 100%; height: 120px; background: #fff; border: 1px solid #eee; }
   #warn { color: #c0392b; min-height: 16px; font-size: 11px; }
   .hint { color: #999; font-size: 11px; }
@@ -74,7 +74,7 @@
 
   <!-- 右：实时统计 -->
   <div id="stats">
-    <h3>实时统计（0.5s 刷新）</h3>
+    <h3>实时统计</h3>
     <div class="stat-row"><span>模拟时间 t</span><span id="simTime">0.00</span></div>
     <div class="stat-row"><span>步数</span><span id="stepCount">0</span></div>
     <div class="stat-row"><span>游离颗粒（数量/总数）</span><span id="freeP">0/0</span></div>
@@ -90,7 +90,7 @@
     <h3>分子量分布（kDa）</h3>
     <canvas id="histCanvas"></canvas>
     <div class="hint" id="histLabel"></div>
-    <h3>蛋白胶条带模拟（10–800 kDa，对数刻度）</h3>
+    <h3>蛋白胶条带模拟（kDa）</h3>
     <canvas id="gelCanvas"></canvas>
     <div class="hint" id="gelLabel"></div>
   </div>
@@ -340,6 +340,8 @@ const Sim = {
     const complexes = Object.values(g);
     let freeP = 0, freeC = 0, maxMW = 0;
     const mwHist = {};
+    // 蛋白胶条带强度数据：mw → 该分子量处颗粒总数（骨架非蛋白质，单独不显色，不计入）
+    const mwParts = {};
     // 多聚物 = 发生交联的复合物（键只存在于颗粒–骨架之间，故同时含两者即已交联）
     let nPoly = 0, sumP = 0, sumC = 0;
     // 复合物分子量 (kDa) = 颗粒数×44 + 骨架数×骨架分子量
@@ -349,6 +351,7 @@ const Sim = {
       if (cx.nC === 1 && cx.nP === 0) freeC++;
       const mw = mwOf(cx);
       mwHist[mw] = (mwHist[mw] || 0) + 1;
+      if (cx.nP > 0) mwParts[mw] = (mwParts[mw] || 0) + cx.nP;
       if (mw > maxMW) maxMW = mw;
       if (cx.nP >= 1 && cx.nC >= 1) { nPoly++; sumP += cx.nP; sumC += cx.nC; }
     }
@@ -359,7 +362,7 @@ const Sim = {
       nComplex: complexes.length, nPoly,
       avgP: nPoly ? sumP / nPoly : 0,
       avgC: nPoly ? sumC / nPoly : 0,
-      mwHist
+      mwHist, mwParts
     };
   }
 };
@@ -484,16 +487,17 @@ const Render = {
   },
 
   // 蛋白胶条带模拟：横向条带，左低右高，MW范围 10–800 kDa，对数刻度
-  // 条带灰度与宽度由「分子量×数量」强度决定，带扩散渐变边缘，近似真实 SDS-PAGE
+  // 只有颗粒（蛋白质）能被染色显带；骨架非蛋白质，单独不显带，仅参与多聚物分子量计算
+  // 条带强度（灰度与宽度）与该条带所含颗粒总数成正比，带扩散渐变边缘，近似真实 SDS-PAGE
   gel(st) {
     const ctx = this.gelCtx, dpr = window.devicePixelRatio || 1;
     const w = document.getElementById('gelCanvas').clientWidth;
-    const h = 180;
+    const h = 36;
     const c = document.getElementById('gelCanvas');
     c.width = w * dpr; c.height = h * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     // 凝胶背景（浅灰，模拟聚丙烯酰胺胶体）
     ctx.fillStyle = '#e8e8e8'; ctx.fillRect(0, 0, w, h);
-    const entries = Object.entries(st.mwHist).map(([mw, c]) => ({ mw: +mw, c }));
+    const entries = Object.entries(st.mwParts).map(([mw, p]) => ({ mw: +mw, p }));
     if (entries.length === 0) {
       ctx.fillStyle = '#888'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText('暂无数据', w / 2, h / 2);
@@ -503,26 +507,31 @@ const Render = {
     // 对数刻度：log10(10)=1 → log10(800)≈2.903，映射到 [padL, w-padR]
     const MW_MIN = 10, MW_MAX = 800;
     const logMin = Math.log10(MW_MIN), logMax = Math.log10(MW_MAX);
-    const padL = 4, padR = 4, topY = 10, botY = h - 16;
+    // 左右边距需容纳居中绘制的刻度文字（"10"/"800" 半宽约 8px），避免端点刻度被裁剪
+    const padL = 12, padR = 12, topY = 12, botY = h - 2;
     const laneH = botY - topY;
     const xOf = mw => padL + (Math.log10(Math.max(mw, MW_MIN)) - logMin) / (logMax - logMin) * (w - padL - padR);
-    // 计算每个 MW 的强度 = MW × 数量
-    const items = entries.map(e => ({ mw: e.mw, intensity: e.mw * e.c }));
+    // 堵孔效应：分子量超过 700 kDa 的复合物无法进入胶孔，统一滞留渲染在 700 kDa 处，强度累加
+    const PORE_LIMIT = 700;
+    const agg = {};
+    for (const e of entries) {
+      const mw = Math.min(e.mw, PORE_LIMIT);
+      agg[mw] = (agg[mw] || 0) + e.p;
+    }
+    // 条带强度 = 该分子量处颗粒总数（与蛋白量成正比）
+    const items = Object.entries(agg).map(([mw, p]) => ({ mw: +mw, intensity: p }));
     const maxI = Math.max(...items.map(i => i.intensity)) || 1;
-    // 左侧加样孔（模拟凝胶上样凹槽）
-    ctx.fillStyle = '#bbb';
-    ctx.fillRect(2, topY + laneH / 2 - 3, 4, 6);
     // 排序后逐条绘制（按 MW 升序，避免重叠遮盖问题）
     items.sort((a, b) => a.mw - b.mw);
     for (const it of items) {
       const cx = xOf(it.mw);
       const norm = it.intensity / maxI; // 0–1
-      // 灰度：强度越高越深（0=黑, 255=白）
-      const gray = Math.round(255 - norm * 230); // 最深约 25，最浅约 255
+      // 灰度：强度越高越深（0=黑, 255=白），最浅不超过 180，保证弱条带仍深于背景灰（232）
+      const gray = Math.round(180 - norm * 155); // 最深约 25，最浅约 180
       // 宽度：强度越高越粗（1.5–10px）
       const bandW = 1.5 + norm * 8.5;
-      // 垂直渐变：中心深、上下边缘淡（模拟染色扩散）
-      const grad = ctx.createLinearGradient(0, topY, 0, botY);
+      // 水平渐变：中心深、左右边缘淡（模拟染色扩散）
+      const grad = ctx.createLinearGradient(cx - bandW / 2, 0, cx + bandW / 2, 0);
       grad.addColorStop(0,    `rgba(${gray},${gray},${gray},0)`);
       grad.addColorStop(0.5,  `rgba(${gray},${gray},${gray},0.95)`);
       grad.addColorStop(1,    `rgba(${gray},${gray},${gray},0)`);
@@ -537,13 +546,7 @@ const Render = {
       ctx.fillRect(x, topY - 3, 1, 3);
       ctx.fillText(t, x, topY - 12);
     }
-    // 底部说明
-    ctx.fillStyle = '#555'; ctx.font = '9px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
-    ctx.fillText('← 低 MW', padL, h - 2);
-    ctx.textAlign = 'right';
-    ctx.fillText('高 MW →', w - padR, h - 2);
-    const realMax = items[items.length - 1].mw;
-    document.getElementById('gelLabel').textContent = `条带粗细与灰度 = MW×分子数，当前最大复合物 MW = ${realMax} kDa`;
+    document.getElementById('gelLabel').textContent = ``;
   },
 
   pie(st) {
