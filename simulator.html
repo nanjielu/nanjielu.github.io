@@ -29,7 +29,7 @@
   .stat-row { display: flex; justify-content: space-between; padding: 2px 0; font-variant-numeric: tabular-nums; }
   .stat-row span:first-child { color: #666; }
   #histCanvas { width: 100%; height: 140px; background: #fff; border: 1px solid #eee; }
-  #gelCanvas { width: 100%; height: 140px; background: #fff; border: 1px solid #eee; }
+  #gelCanvas { width: 100%; height: 180px; background: #fff; border: 1px solid #eee; }
   #pieCanvas { width: 100%; height: 120px; background: #fff; border: 1px solid #eee; }
   #warn { color: #c0392b; min-height: 16px; font-size: 11px; }
   .hint { color: #999; font-size: 11px; }
@@ -55,6 +55,7 @@
     </div>
     <div class="param">
       <label><input type="checkbox" id="periodic" checked> 周期性边界（默认开）</label>
+      <label><input type="checkbox" id="uniformB"> 接头B均匀分布（默认关，随机分布）</label>
     </div>
     <div class="hint">注：改动后需点“重置系统”生效</div>
   </div>
@@ -63,10 +64,10 @@
   <div id="main">
     <div id="canvasWrap"><canvas id="canvas"></canvas></div>
     <div id="legend">
-      <span><i class="dot" style="background:#6ba8d6"></i>颗粒 P</span>
+      <span><i class="dot" style="background:#cccccc"></i>颗粒 P</span>
       <span><i class="dot" style="background:#e67e22"></i>接头 A</span>
       <span><i class="dot" style="background:#999"></i>骨架链</span>
-      <span><i class="dot" style="background:#27ae60"></i>接头 B</span>
+      <span><i class="dot" style="background:#3498db"></i>接头 B</span>
       <span><i class="dot" style="background:#c0392b"></i>已形成键</span>
     </div>
   </div>
@@ -83,15 +84,15 @@
     <div class="stat-row"><span>多聚物数量</span><span id="nComplex">0</span></div>
     <div class="stat-row"><span>平均每个多聚物中颗粒的数量</span><span id="avgP">0.00</span></div>
     <div class="stat-row"><span>平均每个多聚物中骨架的数量</span><span id="avgC">0.00</span></div>
-    <h3>分子量分布（MW = 颗粒数×44 + 骨架数×骨架分子量，单位 kDa）</h3>
-    <canvas id="histCanvas"></canvas>
-    <div class="hint" id="histLabel"></div>
-    <h3>蛋白胶条带模拟（强度 = 分子量 × 分子数）</h3>
-    <canvas id="gelCanvas"></canvas>
-    <div class="hint" id="gelLabel"></div>
     <h3>结合占比</h3>
     <canvas id="pieCanvas"></canvas>
     <div class="hint" id="pieLabel"></div>
+    <h3>分子量分布（kDa）</h3>
+    <canvas id="histCanvas"></canvas>
+    <div class="hint" id="histLabel"></div>
+    <h3>蛋白胶条带模拟（10–800 kDa，对数刻度）</h3>
+    <canvas id="gelCanvas"></canvas>
+    <div class="hint" id="gelLabel"></div>
   </div>
 </div>
 
@@ -114,19 +115,19 @@ function clamp(v, lo, hi) { return v < lo ? lo : (v > hi ? hi : v); }
 
 /* ---------- 参数定义（界面滑块） ---------- */
 const PARAMS = [
-  { key: 'S',         label: '系统尺寸 S',        min: 500, max: 2000,step: 100, value: 1000 },
-  { key: 'rP',        label: '颗粒半径 rP',       min: 1,   max: 20,  step: 1,   value: 8   },
+  { key: 'S',         label: '系统尺寸 S',        min: 500, max: 1500,step: 100, value: 1000 },
+  { key: 'rP',        label: '颗粒半径 rP',       min: 1,   max: 20,  step: 1,   value: 10   },
   { key: 'NP',        label: '颗粒数 NP',         min: 1,   max: 200, step: 1,   value: 100  },
-  { key: 'nA',        label: '颗粒接头数 nA',     min: 1,   max: 20,  step: 1,   value: 2   },
+  { key: 'nA',        label: '颗粒接头数 nA',     min: 2,   max: 20,  step: 2,   value: 4   },
   { key: 'L',         label: '骨架长度 L',        min: 5,   max: 100, step: 5,   value: 20  },
-  { key: 'NC',        label: '骨架数 NC',         min: 1,   max: 40,  step: 1,   value: 17  },
+  { key: 'NC',        label: '骨架数 NC',         min: 1,   max: 40,  step: 1,   value: 20  },
   { key: 'nB',        label: '骨架接头数 nB',     min: 1,   max: 40,  step: 1,   value: 8   },
-  { key: 'diffusion', label: '扩散系数',          min: 1,   max: 100, step: 1,   value: 30   },
-  { key: 'rReact',    label: '反应距离 rReact',   min: 2,   max: 10,  step: 1,   value: 2   },
-  { key: 'pBind',     label: '结合概率 pBind',    min: 0,   max: 1,   step: 0.05,value: 0.8 },
+  { key: 'diffusion', label: '扩散系数',          min: 10,  max: 100, step: 10,  value: 60   },
+  { key: 'rReact',    label: '反应距离 rReact',   min: 1,   max: 10,  step: 1,   value: 2   },
+  { key: 'pBind',     label: '结合概率 pBind',    min: 0,   max: 1,   step: 0.05,value: 0.1 },
   { key: 'dt',        label: '时间步长 dt',       min: 0.02,max: 1,   step: 0.02,value: 0.3 },
   { key: 'iterations',label: '约束迭代次数',       min: 1,   max: 10,  step: 1,   value: 3   },
-  { key: 'chainMW',   label: '骨架分子量 (kDa)',   min: 10,  max: 100, step: 1,   value: 40  },
+  { key: 'chainMW',   label: '骨架分子量 (kDa)',   min: 10,  max: 100, step: 10,   value: 40  },
 ];
 const params = {};
 PARAMS.forEach(p => params[p.key] = p.value);
@@ -141,6 +142,7 @@ let state = null;
 let running = false;
 let stepsPerFrame = 1;
 let periodic = true;
+let uniformB = false;
 
 /* ============================================================
  * 模拟模块 Sim
@@ -203,10 +205,14 @@ const Sim = {
       for (const b of beads) { minX = Math.min(minX, b.x); maxX = Math.max(maxX, b.x); minY = Math.min(minY, b.y); maxY = Math.max(maxY, b.y); }
       const ox = Math.random() * (S - (maxX - minX)), oy = Math.random() * (S - (maxY - minY));
       for (const b of beads) { b.x += ox - minX; b.y += oy - minY; }
-      // 接头 B：随机分布在珠子上（允许同一珠子多个）
+      // 接头 B：均匀分布时按等间距分布在珠子序列上；否则随机分布在珠子上（允许同一珠子多个）
       const anchors = [];
-      for (let j = 0; j < params.nB; j++)
-        anchors.push({ beadIdx: Math.floor(Math.random() * L), angle: Math.random() * 2 * Math.PI, bound: false, bondIdx: -1 });
+      for (let j = 0; j < params.nB; j++) {
+        const beadIdx = uniformB
+          ? Math.min(L - 1, Math.floor((j + 0.5) * L / params.nB))
+          : Math.floor(Math.random() * L);
+        anchors.push({ beadIdx, angle: Math.random() * 2 * Math.PI, bound: false, bondIdx: -1 });
+      }
       chains.push({ id: i, beads, anchors });
     }
     return { particles, chains, bonds: [], step: 0 };
@@ -425,13 +431,13 @@ const Render = {
       // 接头 B
       for (let k = 0; k < c.anchors.length; k++) {
         const a = c.anchors[k], ap = Sim.anchorPos(c, 'chain', k);
-        ctx.fillStyle = a.bound ? '#16a085' : '#27ae60';
+        ctx.fillStyle = a.bound ? '#1a5276' : '#3498db';
         ctx.beginPath(); ctx.arc(ap.x * sc, ap.y * sc, Math.max(2.5, BEAD_R * sc + 0.6), 0, 2 * Math.PI); ctx.fill();
       }
     }
     // 颗粒
     for (const p of state.particles) {
-      ctx.fillStyle = '#6ba8d6'; ctx.strokeStyle = '#2c5f8a'; ctx.lineWidth = 1.4;
+      ctx.fillStyle = '#cccccc'; ctx.strokeStyle = '#888'; ctx.lineWidth = 1.4;
       ctx.beginPath(); ctx.arc(p.x * sc, p.y * sc, p.r * sc, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
       // 接头 A
       for (let k = 0; k < p.anchors.length; k++) {
@@ -464,12 +470,12 @@ const Render = {
     }
     const maxC = Math.max(...bins) || 1;
     const barW = w / nBins, pad = 2, baseY = h - 16;
-    ctx.fillStyle = '#6ba8d6'; ctx.strokeStyle = '#2c5f8a'; ctx.lineWidth = 1;
+    ctx.fillStyle = '#838B8B'; ctx.strokeStyle = '#888'; ctx.lineWidth = 1;
     for (let i = 0; i < nBins; i++) {
       const bh = (bins[i] / maxC) * (baseY - 14);
       const x = i * barW;
       ctx.fillRect(x + pad, baseY - bh, barW - 2 * pad, bh);
-      if (bins[i] > 0) { ctx.fillStyle = '#555'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(bins[i], x + barW / 2, baseY - bh - 2); ctx.fillStyle = '#6ba8d6'; }
+      if (bins[i] > 0) { ctx.fillStyle = '#555'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(bins[i], x + barW / 2, baseY - bh - 2); ctx.fillStyle = '#838B8B'; }
     }
     ctx.fillStyle = '#666'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
     for (let i = 0; i < nBins; i++) ctx.fillText(minMW + i * binSize, i * barW + barW / 2, h - 3);
@@ -477,37 +483,67 @@ const Render = {
     document.getElementById('histLabel').textContent = ``;
   },
 
-  // 蛋白胶条带模拟：横轴=分子量，纵轴=条带强度=分子量×分子数（模拟按总质量染色）
+  // 蛋白胶条带模拟：横向条带，左低右高，MW范围 10–800 kDa，对数刻度
+  // 条带灰度与宽度由「分子量×数量」强度决定，带扩散渐变边缘，近似真实 SDS-PAGE
   gel(st) {
     const ctx = this.gelCtx, dpr = window.devicePixelRatio || 1;
     const w = document.getElementById('gelCanvas').clientWidth;
-    const h = 140;
+    const h = 180;
     const c = document.getElementById('gelCanvas');
     c.width = w * dpr; c.height = h * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
+    // 凝胶背景（浅灰，模拟聚丙烯酰胺胶体）
+    ctx.fillStyle = '#e8e8e8'; ctx.fillRect(0, 0, w, h);
     const entries = Object.entries(st.mwHist).map(([mw, c]) => ({ mw: +mw, c }));
-    if (entries.length === 0) { document.getElementById('gelLabel').textContent = '暂无数据'; return; }
-    // 与分子量分布图一致：0–640 kDa，间隔 80，共 8 个箱
-    const minMW = 0, binSize = 80, nBins = 8;
-    const bins = new Array(nBins).fill(0); // 每箱 = Σ(分子量 × 分子数)，即该区间总质量
-    for (const e of entries) {
-      let bi = Math.floor((e.mw - minMW) / binSize);
-      if (bi < 0) bi = 0;
-      if (bi >= nBins) bi = nBins - 1;
-      bins[bi] += e.mw * e.c;
+    if (entries.length === 0) {
+      ctx.fillStyle = '#888'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('暂无数据', w / 2, h / 2);
+      document.getElementById('gelLabel').textContent = '';
+      return;
     }
-    const maxMass = Math.max(...bins) || 1;
-    const barW = w / nBins, pad = 2, baseY = h - 16;
-    // 蛋白胶染色条带：深蓝色柱
-    ctx.fillStyle = '#1a3d6b';
-    for (let i = 0; i < nBins; i++) {
-      const bh = (bins[i] / maxMass) * (baseY - 14);
-      const x = i * barW;
-      if (bins[i] > 0) ctx.fillRect(x + pad, baseY - bh, barW - 2 * pad, bh);
+    // 对数刻度：log10(10)=1 → log10(800)≈2.903，映射到 [padL, w-padR]
+    const MW_MIN = 10, MW_MAX = 800;
+    const logMin = Math.log10(MW_MIN), logMax = Math.log10(MW_MAX);
+    const padL = 4, padR = 4, topY = 10, botY = h - 16;
+    const laneH = botY - topY;
+    const xOf = mw => padL + (Math.log10(Math.max(mw, MW_MIN)) - logMin) / (logMax - logMin) * (w - padL - padR);
+    // 计算每个 MW 的强度 = MW × 数量
+    const items = entries.map(e => ({ mw: e.mw, intensity: e.mw * e.c }));
+    const maxI = Math.max(...items.map(i => i.intensity)) || 1;
+    // 左侧加样孔（模拟凝胶上样凹槽）
+    ctx.fillStyle = '#bbb';
+    ctx.fillRect(2, topY + laneH / 2 - 3, 4, 6);
+    // 排序后逐条绘制（按 MW 升序，避免重叠遮盖问题）
+    items.sort((a, b) => a.mw - b.mw);
+    for (const it of items) {
+      const cx = xOf(it.mw);
+      const norm = it.intensity / maxI; // 0–1
+      // 灰度：强度越高越深（0=黑, 255=白）
+      const gray = Math.round(255 - norm * 230); // 最深约 25，最浅约 255
+      // 宽度：强度越高越粗（1.5–10px）
+      const bandW = 1.5 + norm * 8.5;
+      // 垂直渐变：中心深、上下边缘淡（模拟染色扩散）
+      const grad = ctx.createLinearGradient(0, topY, 0, botY);
+      grad.addColorStop(0,    `rgba(${gray},${gray},${gray},0)`);
+      grad.addColorStop(0.5,  `rgba(${gray},${gray},${gray},0.95)`);
+      grad.addColorStop(1,    `rgba(${gray},${gray},${gray},0)`);
+      ctx.fillStyle = grad;
+      ctx.fillRect(cx - bandW / 2, topY, bandW, laneH);
     }
-    ctx.fillStyle = '#666'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
-    for (let i = 0; i < nBins; i++) ctx.fillText(minMW + i * binSize, i * barW + barW / 2, h - 3);
-    document.getElementById('gelLabel').textContent = '';
+    // 顶部 MW 刻度（10, 20, 50, 100, 200, 400, 800）
+    const ticks = [10, 20, 50, 100, 200, 400, 800];
+    ctx.fillStyle = '#555'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    for (const t of ticks) {
+      const x = xOf(t);
+      ctx.fillRect(x, topY - 3, 1, 3);
+      ctx.fillText(t, x, topY - 12);
+    }
+    // 底部说明
+    ctx.fillStyle = '#555'; ctx.font = '9px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+    ctx.fillText('← 低 MW', padL, h - 2);
+    ctx.textAlign = 'right';
+    ctx.fillText('高 MW →', w - padR, h - 2);
+    const realMax = items[items.length - 1].mw;
+    document.getElementById('gelLabel').textContent = `条带粗细与灰度 = MW×分子数，当前最大复合物 MW = ${realMax} kDa`;
   },
 
   pie(st) {
@@ -533,12 +569,12 @@ const Render = {
       ctx.fillText(Math.round((1 - frac) * 100) + '%', cx, cy);
     };
     const r = Math.min(w * 0.16, 36), cy = h / 2 - 10;
-    drawPie(w * 0.25, cy, r, st.freeP, st.totalP, '#6ba8d6', '#2c5f8a');
-    drawPie(w * 0.75, cy, r, st.freeC, st.totalC, '#b3b3b3', '#27ae60');
+    drawPie(w * 0.25, cy, r, st.freeP, st.totalP, '#cccccc', '#EE7600');
+    drawPie(w * 0.75, cy, r, st.freeC, st.totalC, '#b3b3b3', '#1C86EE');
     ctx.fillStyle = '#555'; ctx.font = '10px sans-serif'; ctx.textBaseline = 'alphabetic';
     ctx.textAlign = 'center';
-    ctx.fillText(`颗粒 游离${st.freeP}/结合${st.totalP - st.freeP}`, w * 0.25, h - 4);
-    ctx.fillText(`骨架 游离${st.freeC}/结合${st.totalC - st.freeC}`, w * 0.75, h - 4);
+    ctx.fillText(`颗粒  游离${st.freeP}/结合${st.totalP - st.freeP}`, w * 0.25, h - 4);
+    ctx.fillText(`骨架  游离${st.freeC}/结合${st.totalC - st.freeC}`, w * 0.75, h - 4);
     document.getElementById('pieLabel').textContent = '';
   }
 };
@@ -605,6 +641,7 @@ function bindButtons() {
     stepsPerFrame = parseInt(e.target.value); document.getElementById('spfVal').textContent = stepsPerFrame;
   });
   document.getElementById('periodic').addEventListener('change', (e) => { periodic = e.target.checked; });
+  document.getElementById('uniformB').addEventListener('change', (e) => { uniformB = e.target.checked; });
 }
 
 /* 主循环 */
