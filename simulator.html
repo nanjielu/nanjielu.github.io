@@ -120,16 +120,16 @@ function clamp(v, lo, hi) { return v < lo ? lo : (v > hi ? hi : v); }
 const PARAMS = [
   { key: 'S',         label: '系统尺寸 S',        min: 500, max: 1500,step: 100, value: 1000 },
   { key: 'rP',        label: '颗粒半径 rP',       min: 1,   max: 20,  step: 1,   value: 10   },
-  { key: 'NP',        label: '颗粒数 NP',         min: 1,   max: 200, step: 1,   value: 100  },
-  { key: 'nA',        label: '颗粒接头数 nA',     min: 2,   max: 20,  step: 2,   value: 8   },
+  { key: 'NP',        label: '颗粒数 NP',         min: 1,   max: 200, step: 1,   value: 200  },
+  { key: 'nA',        label: '颗粒接头数 nA',     min: 1,   max: 20,  step: 1,   value: 4   },
   { key: 'L',         label: '骨架长度 L',        min: 5,   max: 50,  step: 5,   value: 5  },
-  { key: 'NC',        label: '骨架数 NC',         min: 1,   max: 50,  step: 1,   value: 50  },
+  { key: 'NC',        label: '骨架数 NC',         min: 1,   max: 200, step: 1,   value: 50  },
   { key: 'nB',        label: '骨架接头数 nB',     min: 1,   max: 40,  step: 1,   value: 8   },
   { key: 'diffusion', label: '扩散系数',          min: 10,  max: 100, step: 10,  value: 60   },
   { key: 'rReact',    label: '反应距离 rReact',   min: 1,   max: 10,  step: 1,   value: 2   },
-  { key: 'pBind',     label: '结合概率 pBind',    min: 0,   max: 1,   step: 0.05,value: 0.3 },
+  { key: 'pBind',     label: '结合概率 pBind',    min: 0,   max: 1,   step: 0.05,value: 0.1 },
   { key: 'dt',        label: '时间步长 dt',       min: 0.02,max: 1,   step: 0.02,value: 0.3 },
-  { key: 'iterations',label: '约束迭代次数',       min: 1,   max: 10,  step: 1,   value: 3   },
+  { key: 'iterations',label: '约束迭代次数',       min: 1,   max: 10,  step: 1,   value: 4   },
   { key: 'chainMW',   label: '骨架分子量 (kDa)',   min: 10,  max: 100, step: 10,  value: 10  },
 ];
 const params = {};
@@ -499,7 +499,7 @@ const Render = {
     const h = 36;
     const c = document.getElementById('gelCanvas');
     c.width = w * dpr; c.height = h * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    // 凝胶背景（浅灰，模拟聚丙烯酰胺胶体）
+    // 凝胶背景（白色，模拟聚丙烯酰胺胶体）
     ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, w, h);
     const entries = Object.entries(st.mwParts).map(([mw, p]) => ({ mw: +mw, p }));
     if (entries.length === 0) {
