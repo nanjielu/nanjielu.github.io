@@ -18,6 +18,8 @@
   /* 右侧统计面板 */
   #stats { width: 280px; padding: 10px 14px; overflow-y: auto; background: #fff; border-left: 1px solid #ddd; font-size: 12px; }
   h3 { margin: 10px 0 6px; font-size: 13px; color: #2c3e50; border-bottom: 1px solid #eee; padding-bottom: 3px; }
+  #appTitle { font-size: 16px; font-weight: bold; color: #2c3e50; margin: 4px 0 2px; }
+  #appTitle .ver { font-size: 11px; font-weight: normal; color: #999; margin-left: 6px; }
   .param { margin-bottom: 7px; }
   .param label { display: block; color: #555; margin-bottom: 2px; }
   .param .val { float: right; color: #2c5f8a; font-variant-numeric: tabular-nums; }
@@ -39,7 +41,8 @@
 <div id="app">
   <!-- 左：参数与运行控制 -->
   <div id="controls">
-    <h3>可调参数</h3>
+    <div id="appTitle">多聚物反应模拟 <span class="ver">v0.2.0 · Github @nanjielu</span></div>
+    <h3>参数设置</h3>
     <div id="paramList"></div>
     <div id="warn"></div>
     <h3>运行控制</h3>
@@ -120,11 +123,11 @@ const PARAMS = [
   { key: 'NP',        label: '颗粒数 NP',         min: 1,   max: 200, step: 1,   value: 100  },
   { key: 'nA',        label: '颗粒接头数 nA',     min: 2,   max: 20,  step: 2,   value: 8   },
   { key: 'L',         label: '骨架长度 L',        min: 5,   max: 50,  step: 5,   value: 5  },
-  { key: 'NC',        label: '骨架数 NC',         min: 1,   max: 50,  step: 1,   value: 20  },
+  { key: 'NC',        label: '骨架数 NC',         min: 1,   max: 50,  step: 1,   value: 50  },
   { key: 'nB',        label: '骨架接头数 nB',     min: 1,   max: 40,  step: 1,   value: 8   },
   { key: 'diffusion', label: '扩散系数',          min: 10,  max: 100, step: 10,  value: 60   },
   { key: 'rReact',    label: '反应距离 rReact',   min: 1,   max: 10,  step: 1,   value: 2   },
-  { key: 'pBind',     label: '结合概率 pBind',    min: 0,   max: 1,   step: 0.05,value: 0.1 },
+  { key: 'pBind',     label: '结合概率 pBind',    min: 0,   max: 1,   step: 0.05,value: 0.3 },
   { key: 'dt',        label: '时间步长 dt',       min: 0.02,max: 1,   step: 0.02,value: 0.3 },
   { key: 'iterations',label: '约束迭代次数',       min: 1,   max: 10,  step: 1,   value: 3   },
   { key: 'chainMW',   label: '骨架分子量 (kDa)',   min: 10,  max: 100, step: 10,  value: 10  },
