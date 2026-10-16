@@ -33,6 +33,7 @@
   #histCanvas { width: 100%; height: 140px; background: #fff; border: 1px solid #eee; }
   #gelCanvas { width: 100%; height: 36px; background: #fff; border: 1px solid #eee; }
   #pieCanvas { width: 100%; height: 120px; background: #fff; border: 1px solid #eee; }
+  #trendCanvas { width: 100%; height: 140px; background: #fff; border: 1px solid #eee; }
   #warn { color: #c0392b; min-height: 16px; font-size: 11px; }
   .hint { color: #999; font-size: 11px; }
 </style>
@@ -50,10 +51,10 @@
       <button id="startBtn">开始</button>
       <button id="pauseBtn">暂停</button>
       <button id="resetBtn">重置系统</button>
-      <button id="initBtn">初始化参数</button>
+      <button id="copyBtn">复制参数</button>
     </div>
     <div class="param">
-      <label>每帧步数（增大可加快模拟速度）<span class="val" id="spfVal">1</span></label>
+      <label>每帧步数（增大可加快模拟速度） <span class="val" id="spfVal">1</span></label>
       <input type="range" id="spf" min="1" max="50" value="1">
     </div>
     <div class="param">
@@ -71,7 +72,7 @@
       <span><i class="dot" style="background:#e67e22"></i>接头 A</span>
       <span><i class="dot" style="background:#999"></i>骨架链</span>
       <span><i class="dot" style="background:#3498db"></i>接头 B</span>
-      <span><i class="dot" style="background:#c0392b"></i>已形成键</span>
+      <span><i class="dot" style="background:#791E0F"></i>已形成键</span>
     </div>
   </div>
 
@@ -90,6 +91,9 @@
     <h3>结合占比</h3>
     <canvas id="pieCanvas"></canvas>
     <div class="hint" id="pieLabel"></div>
+    <h3>结合占比随步数变化</h3>
+    <canvas id="trendCanvas"></canvas>
+    <div class="hint" id="trendLabel"><span style="color:#EE7600">■</span> 颗粒结合占比　<span style="color:#1C86EE">■</span> 骨架结合占比</div>
     <h3>分子量分布（kDa）</h3>
     <canvas id="histCanvas"></canvas>
     <div class="hint" id="histLabel"></div>
@@ -139,6 +143,8 @@ PARAMS.forEach(p => params[p.key] = p.value);
 const BEAD_R = 3;      // 骨架珠子半径
 const SEG_LEN = 7;     // 骨架相邻珠子平衡距离
 const PARTICLE_MW = 44;    // 颗粒（HRP）分子量，固定 44 kDa
+const TREND_MAX_STEP = 20000; // 结合占比折线图横轴上限（步）
+const TREND_SAMPLE = 1000;    // 折线图采样间隔（步）
 
 /* ---------- 运行状态 ---------- */
 let state = null;
@@ -218,7 +224,7 @@ const Sim = {
       }
       chains.push({ id: i, beads, anchors });
     }
-    return { particles, chains, bonds: [], step: 0 };
+    return { particles, chains, bonds: [], step: 0, bindHistory: [] };
   },
 
   // 单步推进
@@ -264,6 +270,16 @@ const Sim = {
     this.boundary();
 
     state.step++;
+
+    // 5) 每 TREND_SAMPLE 步记录一次结合占比，供折线图使用（最多记录到 TREND_MAX_STEP）
+    if (state.step % TREND_SAMPLE === 0 && state.step <= TREND_MAX_STEP) {
+      const st = this.stats();
+      state.bindHistory.push({
+        step: state.step,
+        pBound: st.totalP > 0 ? (st.totalP - st.freeP) / st.totalP : 0,
+        cBound: st.totalC > 0 ? (st.totalC - st.freeC) / st.totalC : 0
+      });
+    }
   },
 
   // 反应：未结合 A 与 B 距离<rReact 且 rand<pBind → 成永久键
@@ -366,7 +382,8 @@ const Sim = {
       nComplex: complexes.length, nPoly,
       avgP: nPoly ? sumP / nPoly : 0,
       avgC: nPoly ? sumC / nPoly : 0,
-      mwHist, mwParts
+      mwHist, mwParts,
+      bindHistory: state.bindHistory
     };
   }
 };
@@ -375,13 +392,14 @@ const Sim = {
  * 渲染模块 Render（与模拟逻辑分离）
  * ============================================================ */
 const Render = {
-  ctx: null, histCtx: null, gelCtx: null, dispSize: 0,
+  ctx: null, histCtx: null, gelCtx: null, trendCtx: null, dispSize: 0,
 
   init() {
     this.ctx = document.getElementById('canvas').getContext('2d');
     this.histCtx = document.getElementById('histCanvas').getContext('2d');
     this.gelCtx = document.getElementById('gelCanvas').getContext('2d');
     this.pieCtx = document.getElementById('pieCanvas').getContext('2d');
+    this.trendCtx = document.getElementById('trendCanvas').getContext('2d');
     this.resize();
     window.addEventListener('resize', () => this.resize());
   },
@@ -583,13 +601,87 @@ const Render = {
     ctx.fillText(`颗粒  游离${st.freeP}/结合${st.totalP - st.freeP}`, w * 0.25, h - 4);
     ctx.fillText(`骨架  游离${st.freeC}/结合${st.totalC - st.freeC}`, w * 0.75, h - 4);
     document.getElementById('pieLabel').textContent = '';
+  },
+
+  // 结合占比随步数变化的折线图：横轴固定 0–20000 步（每 5000 刻度），纵轴固定 0–100%（每 25% 刻度）
+  // 配色与上方结合占比饼图一致：颗粒=#EE7600，骨架=#1C86EE
+  trend(st) {
+    const ctx = this.trendCtx, dpr = window.devicePixelRatio || 1;
+    const c = document.getElementById('trendCanvas');
+    const w = c.clientWidth, h = 140;
+    c.width = w * dpr; c.height = h * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
+
+    const padL = 30, padR = 8, padT = 8, padB = 16;
+    const plotW = w - padL - padR, plotH = h - padT - padB;
+    const xOf = s => padL + (Math.min(s, TREND_MAX_STEP) - 0) / TREND_MAX_STEP * plotW;
+    const yOf = p => padT + (1 - p) * plotH; // p ∈ [0,1] → 0% 在底部，100% 在顶部
+
+    // 网格 + 纵轴刻度（0–100%，每 25%）
+    ctx.strokeStyle = '#eee'; ctx.lineWidth = 1;
+    ctx.fillStyle = '#888'; ctx.font = '9px sans-serif';
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    for (let p = 0; p <= 1.0001; p += 0.25) {
+      const y = yOf(p);
+      ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(w - padR, y); ctx.stroke();
+      ctx.fillText(Math.round(p * 100) + '%', padL - 3, y);
+    }
+    // 横轴刻度（0–20000 步，每 5000）
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    for (let s = 0; s <= TREND_MAX_STEP; s += 5000) {
+      const x = xOf(s);
+      if (s > 0 && s < TREND_MAX_STEP) { ctx.beginPath(); ctx.moveTo(x, padT); ctx.lineTo(x, h - padB); ctx.stroke(); }
+      ctx.fillText(s, x, h - padB + 2);
+    }
+    // 坐标轴
+    ctx.strokeStyle = '#bbb';
+    ctx.beginPath(); ctx.moveTo(padL, padT); ctx.lineTo(padL, h - padB); ctx.lineTo(w - padR, h - padB); ctx.stroke();
+
+    // 折线 + 数据点（初始点 (0,0) + 每 TREND_SAMPLE 步一个点）
+    const hist = st.bindHistory || [];
+    const drawLine = (key, color) => {
+      ctx.strokeStyle = color; ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(xOf(0), yOf(0)); // 初始点 (0 步, 0%)
+      hist.forEach(d => ctx.lineTo(xOf(d.step), yOf(d[key])));
+      ctx.stroke();
+      ctx.fillStyle = color;
+      ctx.beginPath(); ctx.arc(xOf(0), yOf(0), 1.5, 0, 2 * Math.PI); ctx.fill(); // 初始点数据点
+      for (const d of hist) { ctx.beginPath(); ctx.arc(xOf(d.step), yOf(d[key]), 1.5, 0, 2 * Math.PI); ctx.fill(); }
+    };
+    drawLine('pBound', '#EE7600');
+    drawLine('cBound', '#1C86EE');
   }
 };
 
 /* ============================================================
  * UI 绑定
  * ============================================================ */
-function showWarn(msg) { document.getElementById('warn').textContent = msg; }
+function showWarn(msg) { const el = document.getElementById('warn'); el.style.color = ''; el.textContent = msg; }
+// 临时提示（绿色），2 秒后自动清除
+function showInfo(msg) {
+  const el = document.getElementById('warn');
+  el.style.color = '#2c7a4b'; el.textContent = msg;
+  clearTimeout(showInfo._t);
+  showInfo._t = setTimeout(() => { if (el.textContent === msg) { el.textContent = ''; el.style.color = ''; } }, 2000);
+}
+// 写入剪贴板：优先 Clipboard API，不可用时回退到 execCommand
+function copyText(text) {
+  const done = ok => ok ? showInfo('已复制参数到剪贴板') : showWarn('复制失败，请手动复制');
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => done(true)).catch(() => done(fallbackCopy(text)));
+  } else done(fallbackCopy(text));
+}
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.top = '-9999px';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+  document.body.removeChild(ta);
+  return ok;
+}
 
 function buildParamUI() {
   const list = document.getElementById('paramList');
@@ -627,22 +719,11 @@ function bindButtons() {
     running = false;
     state = Sim.build();
   };
-  document.getElementById('initBtn').onclick = () => {
-    // 将所有参数滑块重置为默认值并刷新显示
-    PARAMS.forEach(p => {
-      params[p.key] = p.value;
-      const inp = document.getElementById('param_' + p.key);
-      const val = document.getElementById('val_' + p.key);
-      if (inp) inp.value = p.value;
-      if (val) val.textContent = p.value;
-    });
-    // 每帧步数也重置为 1
-    stepsPerFrame = 1;
-    const spf = document.getElementById('spf');
-    if (spf) { spf.value = 1; document.getElementById('spfVal').textContent = 1; }
-    // 重建系统
-    running = false;
-    state = Sim.build();
+  // 复制所有可调参数到剪贴板（便于记录/复现模拟条件）
+  document.getElementById('copyBtn').onclick = () => {
+    const lines = ['多聚物反应模拟 v0.2.0 · Github @nanjielu'];
+    PARAMS.forEach(p => lines.push(`${p.label} = ${params[p.key]}`));
+    copyText(lines.join('\n'));
   };
   document.getElementById('spf').addEventListener('input', (e) => {
     stepsPerFrame = parseInt(e.target.value); document.getElementById('spfVal').textContent = stepsPerFrame;
@@ -664,7 +745,7 @@ bindButtons();
 Render.init();
 state = Sim.build();
 loop();
-setInterval(() => { if (state) { const st = Sim.stats(); updateStatsUI(st); Render.hist(st); Render.gel(st); Render.pie(st); } }, 500);
+setInterval(() => { if (state) { const st = Sim.stats(); updateStatsUI(st); Render.hist(st); Render.gel(st); Render.pie(st); Render.trend(st); } }, 500);
 </script>
 </body>
 </html>
